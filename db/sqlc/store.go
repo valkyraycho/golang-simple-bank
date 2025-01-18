@@ -8,18 +8,18 @@ import (
 
 type Store struct {
 	*Queries
-	db *sql.DB
+	sqlDB *sql.DB
 }
 
 func NewStore(db *sql.DB) *Store {
 	return &Store{
 		Queries: New(db),
-		db:      db,
+		sqlDB:   db,
 	}
 }
 
 func (store *Store) execTx(ctx context.Context, fn func(*Queries) error) error {
-	tx, err := store.db.BeginTx(ctx, nil)
+	tx, err := store.sqlDB.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -34,11 +34,6 @@ func (store *Store) execTx(ctx context.Context, fn func(*Queries) error) error {
 	return tx.Commit()
 }
 
-type TransferTxParams struct {
-	FromAccountID int64 `json:"from_account_id"`
-	ToAccountID   int64 `json:"to_account_id"`
-	Amount        int64 `json:"amount"`
-}
 type TransferTxResult struct {
 	Transaction Transaction `json:"transaction"`
 	FromAccount Account     `json:"from_account"`
@@ -47,7 +42,7 @@ type TransferTxResult struct {
 	ToEntry     Entry       `json:"to_entry"`
 }
 
-func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
+func (store *Store) TransferTx(ctx context.Context, arg CreateTransactionParams) (TransferTxResult, error) {
 	var result TransferTxResult
 
 	err := store.execTx(ctx, func(q *Queries) error {

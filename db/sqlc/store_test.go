@@ -20,7 +20,7 @@ func TestTransferTx(t *testing.T) {
 
 	for i := 0; i < n; i++ {
 		go func() {
-			res, err := store.TransferTx(context.Background(), TransferTxParams{
+			res, err := store.TransferTx(context.Background(), CreateTransactionParams{
 				FromAccountID: account1.ID,
 				ToAccountID:   account2.ID,
 				Amount:        amount,
