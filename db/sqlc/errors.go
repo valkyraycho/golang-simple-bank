@@ -10,3 +10,7 @@ const (
 var ErrUniqueViolation = &pq.Error{
 	Code: UniqueViolation,
 }
+
+var ErrForeignKeyViolation = &pq.Error{
+	Code: ForeignKeyViolation,
+}
