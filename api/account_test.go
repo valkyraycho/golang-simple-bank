@@ -101,6 +101,10 @@ func TestGetAccountAPI(t *testing.T) {
 
 }
 
+func TestCreateAccountAPI(t *testing.T) {
+
+}
+
 func randomAccount() db.Account {
 	return db.Account{
 		ID:       utils.RandomInt(1, 1000),
