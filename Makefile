@@ -10,8 +10,14 @@ dropdb:
 migrateup:
 	migrate -path db/migration -database "postgresql://postgres:postgres@localhost:5432/bank?sslmode=disable" -verbose up
 
+migrateup1:
+	migrate -path db/migration -database "postgresql://postgres:postgres@localhost:5432/bank?sslmode=disable" -verbose up 1
+
 migratedown:
 	migrate -path db/migration -database "postgresql://postgres:postgres@localhost:5432/bank?sslmode=disable" -verbose down
+
+migratedown1:
+	migrate -path db/migration -database "postgresql://postgres:postgres@localhost:5432/bank?sslmode=disable" -verbose down 1
 
 test:
 	go test -v -cover ./...
@@ -22,4 +28,4 @@ runserver:
 mock:
 	mockgen -destination db/mock/store.go github.com/valkyraycho/bank/db/sqlc Store
 
-.PHONY: postgres createdb dropdb migrateup migratedown test runserver mock
+.PHONY: postgres createdb dropdb migrateup migrateup1 migratedown migratedown1 test runserver mock
