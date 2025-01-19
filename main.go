@@ -7,22 +7,21 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/valkyraycho/bank/api"
 	db "github.com/valkyraycho/bank/db/sqlc"
-)
-
-const (
-	dbDriver      = "postgres"
-	dbSource      = "postgresql://postgres:postgres@localhost:5432/bank?sslmode=disable"
-	serverAddress = "0.0.0.0:8080"
+	"github.com/valkyraycho/bank/utils"
 )
 
 func main() {
-	conn, err := sql.Open(dbDriver, dbSource)
+	cfg, err := utils.LoadConfig(".")
+	if err != nil {
+		log.Fatal("cannot load config: ", err)
+	}
+	conn, err := sql.Open(cfg.DBDriver, cfg.DBSource)
 	if err != nil {
 		log.Fatal("cannot connect to db: ", err)
 	}
 
 	server := api.NewServer(db.NewStore(conn))
-	err = server.Start(serverAddress)
+	err = server.Start(cfg.ServerAddress)
 	if err != nil {
 		log.Fatal("cannot start the server: ", err)
 	}

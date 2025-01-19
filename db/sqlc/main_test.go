@@ -7,19 +7,19 @@ import (
 	"testing"
 
 	_ "github.com/lib/pq"
+	"github.com/valkyraycho/bank/utils"
 )
 
 var testDB *sql.DB
 var testQueries *Queries
 
-const (
-	dbDriver = "postgres"
-	dbSource = "postgresql://postgres:postgres@localhost:5432/bank?sslmode=disable"
-)
-
 func TestMain(m *testing.M) {
-	var err error
-	testDB, err = sql.Open(dbDriver, dbSource)
+	cfg, err := utils.LoadConfig("../..")
+	if err != nil {
+		log.Fatal("cannot load config: ", err)
+	}
+
+	testDB, err = sql.Open(cfg.DBDriver, cfg.DBSource)
 	if err != nil {
 		log.Fatal("unable to connect to db: ", err)
 	}
