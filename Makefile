@@ -19,4 +19,7 @@ test:
 runserver:
 	go run main.go
 
-.PHONY: postgres createdb dropdb migrateup migratedown test runserver
+mock:
+	mockgen -destination db/mock/store.go github.com/valkyraycho/bank/db/sqlc Store
+
+.PHONY: postgres createdb dropdb migrateup migratedown test runserver mock
