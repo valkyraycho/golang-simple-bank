@@ -1,19 +1,29 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 	db "github.com/valkyraycho/bank/db/sqlc"
+	"github.com/valkyraycho/bank/token"
+	"github.com/valkyraycho/bank/utils"
 )
 
 type Server struct {
-	store  db.Store
-	router *gin.Engine
+	cfg        utils.Config
+	store      db.Store
+	tokenMaker token.Maker
+	router     *gin.Engine
 }
 
-func NewServer(store db.Store) *Server {
-	server := &Server{store: store}
+func NewServer(cfg utils.Config, store db.Store) (*Server, error) {
+	tokenMaker, err := token.NewPasetoMaker(cfg.TokenSymmetricKey)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create token maker: %w", err)
+	}
+	server := &Server{cfg: cfg, store: store, tokenMaker: tokenMaker}
 	router := gin.Default()
 
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
@@ -28,7 +38,7 @@ func NewServer(store db.Store) *Server {
 	router.POST("/transactions", server.createTransaction)
 
 	server.router = router
-	return server
+	return server, nil
 }
 
 func (s *Server) Start(addr string) error {
