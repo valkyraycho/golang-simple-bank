@@ -24,21 +24,26 @@ func NewServer(cfg utils.Config, store db.Store) (*Server, error) {
 		return nil, fmt.Errorf("cannot create token maker: %w", err)
 	}
 	server := &Server{cfg: cfg, store: store, tokenMaker: tokenMaker}
-	router := gin.Default()
 
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		v.RegisterValidation("currency", isValidCurrency)
 	}
 
-	router.POST("/users", server.createUser)
-
-	router.GET("/accounts/:id", server.getAccount)
-	router.GET("/accounts", server.getAccounts)
-	router.POST("/accounts", server.createAccount)
-	router.POST("/transactions", server.createTransaction)
-
-	server.router = router
+	server.registerRouter()
 	return server, nil
+}
+
+func (s *Server) registerRouter() {
+	router := gin.Default()
+
+	router.POST("/users", s.createUser)
+	router.POST("/users/login", s.loginUser)
+
+	router.GET("/accounts/:id", s.getAccount)
+	router.GET("/accounts", s.getAccounts)
+	router.POST("/accounts", s.createAccount)
+	router.POST("/transactions", s.createTransaction)
+	s.router = router
 }
 
 func (s *Server) Start(addr string) error {
