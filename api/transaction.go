@@ -2,11 +2,13 @@ package api
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	db "github.com/valkyraycho/bank/db/sqlc"
+	"github.com/valkyraycho/bank/token"
 )
 
 type createTransactionRequest struct {
@@ -23,10 +25,19 @@ func (s *Server) createTransaction(ctx *gin.Context) {
 		return
 	}
 
-	if !s.isValidAccount(ctx, req.FromAccountID, req.Currency) {
+	fromAccount, valid := s.isValidAccount(ctx, req.FromAccountID, req.Currency)
+	if !valid {
 		return
 	}
-	if !s.isValidAccount(ctx, req.ToAccountID, req.Currency) {
+
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+	if authPayload.Username != fromAccount.Owner {
+		ctx.JSON(http.StatusUnauthorized, errors.New("from account doesn't belong to the authenticated user"))
+		return
+	}
+
+	_, valid = s.isValidAccount(ctx, req.ToAccountID, req.Currency)
+	if !valid {
 		return
 	}
 
@@ -42,19 +53,19 @@ func (s *Server) createTransaction(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, res)
 }
 
-func (s *Server) isValidAccount(ctx *gin.Context, accountID int64, currency string) bool {
+func (s *Server) isValidAccount(ctx *gin.Context, accountID int64, currency string) (db.Account, bool) {
 	account, err := s.store.GetAccount(ctx, accountID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
-			return false
+			return account, false
 		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return false
+		return account, false
 	}
 	if account.Currency != currency {
 		ctx.JSON(http.StatusBadRequest, errorResponse(fmt.Errorf("account [%d] currency mismatch: %s vs %s", accountID, account.Currency, currency)))
-		return false
+		return account, false
 	}
-	return true
+	return account, true
 }
