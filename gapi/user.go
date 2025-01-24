@@ -144,10 +144,18 @@ func convertUser(user db.User) *pb.User {
 }
 
 func (s *Server) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
-	violations := validateUpdateUserRequest(req)
+	payload, err := s.authorizeUser(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Unauthenticated, "unauthorized: %s", err)
+	}
 
+	violations := validateUpdateUserRequest(req)
 	if len(violations) > 0 {
 		return nil, invalidArgumentError(violations)
+	}
+
+	if req.GetUsername() != payload.Username {
+		return nil, status.Error(codes.PermissionDenied, "no permission to update other user's info")
 	}
 
 	args := db.UpdateUserParams{
