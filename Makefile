@@ -34,4 +34,7 @@ protoc:
     --go-grpc_out=pb --go-grpc_opt=paths=source_relative \
     proto/*.proto
 
-.PHONY: postgres createdb dropdb migrateup migrateup1 migratedown migratedown1 test runserver mock protoc
+evans:
+	evans --host localhost --port 8081 -r repl
+
+.PHONY: postgres createdb dropdb migrateup migrateup1 migratedown migratedown1 test runserver mock protoc evans
