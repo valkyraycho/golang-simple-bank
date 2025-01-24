@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -50,4 +51,92 @@ func TestGetUser(t *testing.T) {
 	require.Equal(t, user.Email, resUser.Email)
 	require.Equal(t, user.CreatedAt, resUser.CreatedAt)
 	require.Equal(t, user.PasswordChangedAt, resUser.PasswordChangedAt)
+}
+
+func TestUpdateUserOnlyFullName(t *testing.T) {
+	user := createRandomUser(t)
+
+	newFullName := utils.RandomOwner()
+	newUser, err := testQueries.UpdateUser(context.Background(), UpdateUserParams{
+		Username: user.Username,
+		FullName: sql.NullString{
+			String: newFullName,
+			Valid:  true,
+		},
+	})
+
+	require.NoError(t, err)
+	require.NotEqual(t, user.FullName, newUser.FullName)
+	require.Equal(t, newFullName, newUser.FullName)
+	require.Equal(t, user.Email, newUser.Email)
+	require.Equal(t, user.HashedPassword, newUser.HashedPassword)
+}
+func TestUpdateUserOnlyEmail(t *testing.T) {
+	user := createRandomUser(t)
+
+	newEmail := utils.RandomEmail()
+	newUser, err := testQueries.UpdateUser(context.Background(), UpdateUserParams{
+		Username: user.Username,
+		Email: sql.NullString{
+			String: newEmail,
+			Valid:  true,
+		},
+	})
+
+	require.NoError(t, err)
+	require.NotEqual(t, user.Email, newUser.Email)
+	require.Equal(t, newEmail, newUser.Email)
+	require.Equal(t, user.FullName, newUser.FullName)
+	require.Equal(t, user.HashedPassword, newUser.HashedPassword)
+}
+func TestUpdateUserOnlyPassword(t *testing.T) {
+	user := createRandomUser(t)
+
+	newPassword, err := utils.HashPassword(utils.RandomString(6))
+
+	newUser, err := testQueries.UpdateUser(context.Background(), UpdateUserParams{
+		Username: user.Username,
+		HashedPassword: sql.NullString{
+			String: newPassword,
+			Valid:  true,
+		},
+	})
+
+	require.NoError(t, err)
+	require.NotEqual(t, user.HashedPassword, newUser.HashedPassword)
+	require.Equal(t, newPassword, newUser.HashedPassword)
+	require.Equal(t, user.FullName, newUser.FullName)
+	require.Equal(t, user.Email, newUser.Email)
+}
+
+func TestUpdateUserAll(t *testing.T) {
+	user := createRandomUser(t)
+
+	newPassword, err := utils.HashPassword(utils.RandomString(6))
+	newEmail := utils.RandomEmail()
+	newFullName := utils.RandomOwner()
+
+	newUser, err := testQueries.UpdateUser(context.Background(), UpdateUserParams{
+		Username: user.Username,
+		HashedPassword: sql.NullString{
+			String: newPassword,
+			Valid:  true,
+		},
+		Email: sql.NullString{
+			String: newEmail,
+			Valid:  true,
+		},
+		FullName: sql.NullString{
+			String: newFullName,
+			Valid:  true,
+		},
+	})
+
+	require.NoError(t, err)
+	require.NotEqual(t, user.HashedPassword, newUser.HashedPassword)
+	require.NotEqual(t, user.Email, newUser.Email)
+	require.NotEqual(t, user.FullName, newUser.FullName)
+	require.Equal(t, newPassword, newUser.HashedPassword)
+	require.Equal(t, newFullName, newUser.FullName)
+	require.Equal(t, newEmail, newUser.Email)
 }
