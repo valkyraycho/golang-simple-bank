@@ -22,7 +22,7 @@ func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb
 	user, err := s.store.CreateUser(ctx, db.CreateUserParams{
 		Username:       req.GetUsername(),
 		HashedPassword: hashedPassword,
-		FullName:       req.GetFullname(),
+		FullName:       req.GetFullName(),
 		Email:          req.GetEmail(),
 	})
 	if err != nil {
