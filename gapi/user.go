@@ -38,7 +38,7 @@ func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb
 		AfterCreate: func(user db.User) error {
 			opts := []asynq.Option{
 				asynq.MaxRetry(10),
-				asynq.ProcessIn(3 * time.Second),
+				asynq.ProcessIn(10 * time.Second),
 				asynq.Queue(worker.QueueCritical),
 			}
 
