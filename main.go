@@ -22,6 +22,7 @@ import (
 	_ "github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rakyll/statik/fs"
+	"github.com/rs/cors"
 	"github.com/valkyraycho/bank/api"
 	db "github.com/valkyraycho/bank/db/sqlc"
 	_ "github.com/valkyraycho/bank/docs/statik"
@@ -204,7 +205,7 @@ func runGatewayServer(
 	mux.Handle("/swagger/", http.StripPrefix("/swagger/", http.FileServer(statikFS)))
 
 	httpServer := &http.Server{
-		Handler: gapi.HTTPLogger(mux),
+		Handler: cors.Default().Handler(gapi.HTTPLogger(mux)),
 		Addr:    cfg.HTTPServerAddress,
 	}
 
