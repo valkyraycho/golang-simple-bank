@@ -104,12 +104,12 @@ func (s *Server) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (*pb.L
 		return nil, status.Errorf(codes.NotFound, "incorrect password: %s", err)
 	}
 
-	accessToken, accessPayload, err := s.tokenMaker.CreateToken(user.Username, s.cfg.AccessTokenDuration)
+	accessToken, accessPayload, err := s.tokenMaker.CreateToken(user.Username, user.Role, s.cfg.AccessTokenDuration)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "failed to create access token: %s", err)
 	}
 
-	refreshToken, refreshPayload, err := s.tokenMaker.CreateToken(user.Username, s.cfg.RefreshTokenDuration)
+	refreshToken, refreshPayload, err := s.tokenMaker.CreateToken(user.Username, user.Role, s.cfg.RefreshTokenDuration)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "failed to create refresh token: %s", err)
 	}

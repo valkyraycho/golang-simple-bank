@@ -24,6 +24,7 @@ import (
 func TestGetAccountAPI(t *testing.T) {
 	user, _ := randomUser(t)
 	account := randomAccount(user.Username)
+	role := utils.DepositorRole
 
 	testCases := []struct {
 		name          string
@@ -42,6 +43,7 @@ func TestGetAccountAPI(t *testing.T) {
 					tokenMaker,
 					authorizationTypeBearer,
 					user.Username,
+					role,
 					time.Minute,
 				)
 			},
@@ -66,6 +68,7 @@ func TestGetAccountAPI(t *testing.T) {
 					tokenMaker,
 					authorizationTypeBearer,
 					"unauthorized",
+					role,
 					time.Minute,
 				)
 			},
@@ -102,6 +105,7 @@ func TestGetAccountAPI(t *testing.T) {
 					tokenMaker,
 					authorizationTypeBearer,
 					user.Username,
+					role,
 					time.Minute,
 				)
 			},
@@ -125,6 +129,7 @@ func TestGetAccountAPI(t *testing.T) {
 					tokenMaker,
 					authorizationTypeBearer,
 					user.Username,
+					role,
 					time.Minute,
 				)
 			},
@@ -148,6 +153,7 @@ func TestGetAccountAPI(t *testing.T) {
 					tokenMaker,
 					authorizationTypeBearer,
 					user.Username,
+					role,
 					time.Minute,
 				)
 			},
@@ -188,6 +194,7 @@ func TestGetAccountAPI(t *testing.T) {
 func TestCreateAccountAPI(t *testing.T) {
 	user, _ := randomUser(t)
 	account := randomAccount(user.Username)
+	role := utils.DepositorRole
 
 	testCases := []struct {
 		name          string
@@ -209,6 +216,7 @@ func TestCreateAccountAPI(t *testing.T) {
 					tokenMaker,
 					authorizationTypeBearer,
 					user.Username,
+					role,
 					time.Minute,
 				)
 			},
@@ -256,6 +264,7 @@ func TestCreateAccountAPI(t *testing.T) {
 					tokenMaker,
 					authorizationTypeBearer,
 					user.Username,
+					role,
 					time.Minute,
 				)
 			},
@@ -286,6 +295,7 @@ func TestCreateAccountAPI(t *testing.T) {
 					tokenMaker,
 					authorizationTypeBearer,
 					user.Username,
+					role,
 					time.Minute,
 				)
 			},
@@ -316,6 +326,7 @@ func TestCreateAccountAPI(t *testing.T) {
 					tokenMaker,
 					authorizationTypeBearer,
 					user.Username,
+					role,
 					time.Minute,
 				)
 			},
@@ -346,6 +357,7 @@ func TestCreateAccountAPI(t *testing.T) {
 					tokenMaker,
 					authorizationTypeBearer,
 					user.Username,
+					role,
 					time.Minute,
 				)
 			},
@@ -386,6 +398,7 @@ func TestCreateAccountAPI(t *testing.T) {
 
 func TestGetAccountsAPI(t *testing.T) {
 	user, _ := randomUser(t)
+	role := utils.DepositorRole
 
 	n := 5
 
@@ -419,6 +432,7 @@ func TestGetAccountsAPI(t *testing.T) {
 					tokenMaker,
 					authorizationTypeBearer,
 					user.Username,
+					role,
 					time.Minute,
 				)
 			},
@@ -466,6 +480,7 @@ func TestGetAccountsAPI(t *testing.T) {
 					tokenMaker,
 					authorizationTypeBearer,
 					user.Username,
+					role,
 					time.Minute,
 				)
 			},
@@ -496,6 +511,7 @@ func TestGetAccountsAPI(t *testing.T) {
 					tokenMaker,
 					authorizationTypeBearer,
 					user.Username,
+					role,
 					time.Minute,
 				)
 			},
@@ -521,6 +537,7 @@ func TestGetAccountsAPI(t *testing.T) {
 					tokenMaker,
 					authorizationTypeBearer,
 					user.Username,
+					role,
 					time.Minute,
 				)
 			},

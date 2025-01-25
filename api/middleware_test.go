@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 	"github.com/valkyraycho/bank/token"
+	"github.com/valkyraycho/bank/utils"
 )
 
 func addAuthorizationToRequest(
@@ -18,15 +19,18 @@ func addAuthorizationToRequest(
 	tokenMaker token.Maker,
 	authorizationType string,
 	username string,
+	role string,
 	duration time.Duration,
 ) {
-	accessToken, payload, err := tokenMaker.CreateToken(username, duration)
+	accessToken, payload, err := tokenMaker.CreateToken(username, role, duration)
 	require.NoError(t, err)
 	require.NotEmpty(t, payload)
 
 	request.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationType, accessToken))
 }
 func TestAuthMiddleware(t *testing.T) {
+	role := utils.DepositorRole
+
 	testCases := []struct {
 		name          string
 		setupAuth     func(t *testing.T, request *http.Request, tokenMaker token.Maker)
@@ -41,6 +45,7 @@ func TestAuthMiddleware(t *testing.T) {
 					tokenMaker,
 					authorizationTypeBearer,
 					"user",
+					role,
 					time.Minute,
 				)
 			},
@@ -64,6 +69,7 @@ func TestAuthMiddleware(t *testing.T) {
 					tokenMaker,
 					"unsupported",
 					"user",
+					role,
 					time.Minute,
 				)
 			},
@@ -80,6 +86,7 @@ func TestAuthMiddleware(t *testing.T) {
 					tokenMaker,
 					"",
 					"user",
+					role,
 					time.Minute,
 				)
 			},
@@ -96,6 +103,7 @@ func TestAuthMiddleware(t *testing.T) {
 					tokenMaker,
 					authorizationTypeBearer,
 					"user",
+					role,
 					-time.Minute,
 				)
 			},

@@ -25,6 +25,9 @@ test:
 runserver:
 	go run main.go
 
+sqlc:
+	sqlc generate
+
 mock:
 	mockgen -package mockdb -destination db/mock/store.go github.com/valkyraycho/bank/db/sqlc Store
 	mockgen -package mockwk -destination worker/mock/distributor.go github.com/valkyraycho/bank/worker TaskDistributor
@@ -43,4 +46,4 @@ evans:
 redis:
 	docker run --name redis -p 6379:6379 -d redis:7-alpine
 
-.PHONY: postgres createdb dropdb migrateup migrateup1 migratedown migratedown1 test runserver mock protoc evans redis
+.PHONY: postgres createdb dropdb migrateup migrateup1 migratedown migratedown1 test runserver mock protoc evans redis sqlc
