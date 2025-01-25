@@ -15,7 +15,7 @@ func createRandomTransaction(t *testing.T, account1, account2 Account) Transacti
 		Amount:        utils.RandomMoney(),
 	}
 
-	transaction, err := testQueries.CreateTransaction(context.Background(), args)
+	transaction, err := testStore.CreateTransaction(context.Background(), args)
 	require.NoError(t, err)
 	require.NotEmpty(t, transaction)
 
@@ -34,7 +34,7 @@ func TestCreateTransaction(t *testing.T) {
 
 func TestGetTransaction(t *testing.T) {
 	transaction := createRandomTransaction(t, createRandomAccount(t), createRandomAccount(t))
-	resTransaction, err := testQueries.GetTransaction(context.Background(), transaction.ID)
+	resTransaction, err := testStore.GetTransaction(context.Background(), transaction.ID)
 
 	require.NoError(t, err)
 	require.NotEmpty(t, resTransaction)
@@ -61,7 +61,7 @@ func TestListTransactions(t *testing.T) {
 		Offset:        5,
 	}
 
-	transactions, err := testQueries.ListTransactions(context.Background(), args)
+	transactions, err := testStore.ListTransactions(context.Background(), args)
 	require.NoError(t, err)
 	require.Len(t, transactions, 5)
 

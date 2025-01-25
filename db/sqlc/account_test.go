@@ -2,9 +2,9 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"testing"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/require"
 	"github.com/valkyraycho/bank/utils"
 )
@@ -17,7 +17,7 @@ func createRandomAccount(t *testing.T) Account {
 		Currency: utils.RandomCurrency(),
 	}
 
-	account, err := testQueries.CreateAccount(context.Background(), args)
+	account, err := testStore.CreateAccount(context.Background(), args)
 	require.NoError(t, err)
 	require.NotEmpty(t, account)
 
@@ -36,7 +36,7 @@ func TestCreateAccount(t *testing.T) {
 
 func TestGetAccount(t *testing.T) {
 	account := createRandomAccount(t)
-	resAccount, err := testQueries.GetAccount(context.Background(), account.ID)
+	resAccount, err := testStore.GetAccount(context.Background(), account.ID)
 
 	require.NoError(t, err)
 	require.NotEmpty(t, resAccount)
@@ -56,7 +56,7 @@ func TestUpdateAccount(t *testing.T) {
 		Balance: utils.RandomMoney(),
 	}
 
-	resAccount, err := testQueries.UpdateAccount(context.Background(), args)
+	resAccount, err := testStore.UpdateAccount(context.Background(), args)
 	require.NoError(t, err)
 	require.NotEmpty(t, resAccount)
 
@@ -70,11 +70,11 @@ func TestUpdateAccount(t *testing.T) {
 func TestDeleteAccount(t *testing.T) {
 	account := createRandomAccount(t)
 
-	err := testQueries.DeleteAccount(context.Background(), account.ID)
+	err := testStore.DeleteAccount(context.Background(), account.ID)
 	require.NoError(t, err)
-	deletedAccount, err := testQueries.GetAccount(context.Background(), account.ID)
+	deletedAccount, err := testStore.GetAccount(context.Background(), account.ID)
 	require.Error(t, err)
-	require.EqualError(t, err, sql.ErrNoRows.Error())
+	require.EqualError(t, err, pgx.ErrNoRows.Error())
 	require.Empty(t, deletedAccount)
 }
 
@@ -91,7 +91,7 @@ func TestListAccounts(t *testing.T) {
 		Offset: 0,
 	}
 
-	accounts, err := testQueries.ListAccounts(context.Background(), args)
+	accounts, err := testStore.ListAccounts(context.Background(), args)
 	require.NoError(t, err)
 	require.NotEmpty(t, accounts)
 

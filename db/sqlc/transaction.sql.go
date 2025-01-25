@@ -26,7 +26,7 @@ type CreateTransactionParams struct {
 }
 
 func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionParams) (Transaction, error) {
-	row := q.db.QueryRowContext(ctx, createTransaction, arg.FromAccountID, arg.ToAccountID, arg.Amount)
+	row := q.db.QueryRow(ctx, createTransaction, arg.FromAccountID, arg.ToAccountID, arg.Amount)
 	var i Transaction
 	err := row.Scan(
 		&i.ID,
@@ -44,7 +44,7 @@ WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetTransaction(ctx context.Context, id int64) (Transaction, error) {
-	row := q.db.QueryRowContext(ctx, getTransaction, id)
+	row := q.db.QueryRow(ctx, getTransaction, id)
 	var i Transaction
 	err := row.Scan(
 		&i.ID,
@@ -74,7 +74,7 @@ type ListTransactionsParams struct {
 }
 
 func (q *Queries) ListTransactions(ctx context.Context, arg ListTransactionsParams) ([]Transaction, error) {
-	rows, err := q.db.QueryContext(ctx, listTransactions,
+	rows, err := q.db.Query(ctx, listTransactions,
 		arg.FromAccountID,
 		arg.ToAccountID,
 		arg.Limit,
@@ -97,9 +97,6 @@ func (q *Queries) ListTransactions(ctx context.Context, arg ListTransactionsPara
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

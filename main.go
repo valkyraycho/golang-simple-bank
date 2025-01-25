@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"os"
 
 	"github.com/hibiken/asynq"
@@ -16,7 +15,8 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rakyll/statik/fs"
 	"github.com/valkyraycho/bank/api"
 	db "github.com/valkyraycho/bank/db/sqlc"
@@ -41,7 +41,7 @@ func main() {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
 
-	conn, err := sql.Open(cfg.DBDriver, cfg.DBSource)
+	connPool, err := pgxpool.New(context.Background(), cfg.DBSource)
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot connect to db: ")
 	}
@@ -51,7 +51,7 @@ func main() {
 	redisOpt := asynq.RedisClientOpt{Addr: cfg.RedisAddress}
 	taskDistributor := worker.NewRedisTaskDistributor(redisOpt)
 
-	store := db.NewStore(conn)
+	store := db.NewStore(connPool)
 	go runTaskHandler(redisOpt, store)
 
 	go runGatewayServer(cfg, store, taskDistributor)

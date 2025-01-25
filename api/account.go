@@ -1,12 +1,13 @@
 package api
 
 import (
-	"database/sql"
 	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lib/pq"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	db "github.com/valkyraycho/bank/db/sqlc"
 	"github.com/valkyraycho/bank/token"
 )
@@ -25,7 +26,7 @@ func (s *Server) getAccount(ctx *gin.Context) {
 	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
 	account, err := s.store.GetAccount(ctx, req.ID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}
@@ -83,9 +84,9 @@ func (s *Server) createAccount(ctx *gin.Context) {
 		Currency: req.Currency,
 	})
 	if err != nil {
-		if pgError, ok := err.(*pq.Error); ok {
-			switch pgError.Code.Name() {
-			case "foreign_key_violation", "unique_violation":
+		if pgError, ok := err.(*pgconn.PgError); ok {
+			switch pgError.Code {
+			case db.ForeignKeyViolation, db.UniqueViolation:
 				ctx.JSON(http.StatusForbidden, errorResponse(err))
 				return
 			}
