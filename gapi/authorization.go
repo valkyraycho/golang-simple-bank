@@ -3,6 +3,7 @@ package gapi
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/valkyraycho/bank/token"
@@ -14,7 +15,7 @@ const (
 	authorizationBearer = "bearer"
 )
 
-func (s *Server) authorizeUser(ctx context.Context) (*token.Payload, error) {
+func (s *Server) authorizeUser(ctx context.Context, accessibleRoles []string) (*token.Payload, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing metadata")
@@ -38,6 +39,10 @@ func (s *Server) authorizeUser(ctx context.Context) (*token.Payload, error) {
 	payload, err := s.tokenMaker.VerifyToken(fields[1])
 	if err != nil {
 		return nil, fmt.Errorf("invalid access token: %s", err)
+	}
+
+	if !slices.Contains(accessibleRoles, payload.Role) {
+		return nil, fmt.Errorf("permission denied")
 	}
 	return payload, nil
 }
