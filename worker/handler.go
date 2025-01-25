@@ -15,6 +15,7 @@ const (
 
 type TaskHandler interface {
 	Start() error
+	Shutdown()
 	HandleTaskSendVerifyEmail(ctx context.Context, task *asynq.Task) error
 }
 
@@ -52,4 +53,8 @@ func (handler *RedisTaskHandler) Start() error {
 	mux.HandleFunc(TaskSendVerifyEmail, handler.HandleTaskSendVerifyEmail)
 
 	return handler.server.Start(mux)
+}
+
+func (handler *RedisTaskHandler) Shutdown() {
+	handler.server.Shutdown()
 }

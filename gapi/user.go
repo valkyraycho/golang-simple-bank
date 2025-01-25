@@ -8,6 +8,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/rs/zerolog/log"
 	db "github.com/valkyraycho/bank/db/sqlc"
 	"github.com/valkyraycho/bank/pb"
 	"github.com/valkyraycho/bank/utils"
@@ -30,6 +31,9 @@ func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to hash password: %s", err)
 	}
+
+	log.Info().Msg(">>> creating user...")
+	time.Sleep(10 * time.Second)
 
 	createUserTxResult, err := s.store.CreateUserTx(ctx, db.CreateUserTxParams{
 		CreateUserParams: db.CreateUserParams{
@@ -60,6 +64,7 @@ func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb
 		}
 		return nil, status.Errorf(codes.Internal, "failed to create user: %s", err)
 	}
+	log.Info().Msg(">>> done creating user")
 
 	return &pb.CreateUserResponse{User: convertUser(createUserTxResult.User)}, nil
 }

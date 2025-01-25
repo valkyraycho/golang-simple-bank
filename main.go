@@ -2,11 +2,15 @@ package main
 
 import (
 	"context"
+	"errors"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"golang.org/x/sync/errgroup"
 
 	"net"
 	"net/http"
@@ -30,6 +34,12 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
+var interruptSignals = []os.Signal{
+	os.Interrupt,
+	syscall.SIGTERM,
+	syscall.SIGINT,
+}
+
 func main() {
 
 	cfg, err := utils.LoadConfig(".")
@@ -41,7 +51,10 @@ func main() {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
 
-	connPool, err := pgxpool.New(context.Background(), cfg.DBSource)
+	ctx, stop := signal.NotifyContext(context.Background(), interruptSignals...)
+	defer stop()
+
+	connPool, err := pgxpool.New(ctx, cfg.DBSource)
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot connect to db: ")
 	}
@@ -52,10 +65,17 @@ func main() {
 	taskDistributor := worker.NewRedisTaskDistributor(redisOpt)
 
 	store := db.NewStore(connPool)
-	go runTaskHandler(redisOpt, store)
 
-	go runGatewayServer(cfg, store, taskDistributor)
-	runGrpcServer(cfg, store, taskDistributor)
+	waitGroup, ctx := errgroup.WithContext(ctx)
+
+	runTaskHandler(ctx, waitGroup, redisOpt, store)
+	runGatewayServer(ctx, waitGroup, cfg, store, taskDistributor)
+	runGrpcServer(ctx, waitGroup, cfg, store, taskDistributor)
+
+	err = waitGroup.Wait()
+	if err != nil {
+		log.Fatal().Err(err).Msg("error from wait group")
+	}
 }
 
 func runDBMigration(url, dbSource string) {
@@ -75,16 +95,36 @@ func runDBMigration(url, dbSource string) {
 
 }
 
-func runTaskHandler(redisOpt asynq.RedisClientOpt, store db.Store) {
+func runTaskHandler(
+	ctx context.Context,
+	waitGroup *errgroup.Group,
+	redisOpt asynq.RedisClientOpt,
+	store db.Store,
+) {
 	taskHandler := worker.NewRedisTaskHandler(&redisOpt, store)
 	log.Info().Msg("start task processor")
 	err := taskHandler.Start()
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to start task handler")
 	}
+
+	waitGroup.Go(func() error {
+		<-ctx.Done()
+		log.Info().Msg("gracefully shutdowning task handler")
+
+		taskHandler.Shutdown()
+		log.Info().Msg("task handler is gracefully shutdown")
+		return nil
+	})
 }
 
-func runGrpcServer(cfg utils.Config, store db.Store, taskDistributor worker.TaskDistributor) {
+func runGrpcServer(
+	ctx context.Context,
+	waitGroup *errgroup.Group,
+	cfg utils.Config,
+	store db.Store,
+	taskDistributor worker.TaskDistributor,
+) {
 	server, err := gapi.NewServer(cfg, store, taskDistributor)
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot create server: ")
@@ -101,14 +141,37 @@ func runGrpcServer(cfg utils.Config, store db.Store, taskDistributor worker.Task
 		log.Fatal().Err(err).Msg("cannot create listener: ")
 	}
 
-	log.Info().Msgf("start gRPC server at %s", lis.Addr().String())
-	err = grpcServer.Serve(lis)
-	if err != nil {
-		log.Fatal().Err(err).Msg("cannot start gRPC server: ")
-	}
+	waitGroup.Go(func() error {
+		log.Info().Msgf("start gRPC server at %s", lis.Addr().String())
+		err = grpcServer.Serve(lis)
+		if err != nil {
+			if errors.Is(err, grpc.ErrServerStopped) {
+				return nil
+			}
+			log.Fatal().Err(err).Msg("gRPC server failed to serve")
+			return err
+		}
+		return nil
+	})
+
+	waitGroup.Go(func() error {
+		<-ctx.Done()
+		log.Info().Msg("gracefully shutdowning gRPC server")
+
+		grpcServer.GracefulStop()
+		log.Info().Msg("gRPC server is gracefully shutdown")
+		return nil
+	})
+
 }
 
-func runGatewayServer(cfg utils.Config, store db.Store, taskDistributor worker.TaskDistributor) {
+func runGatewayServer(
+	ctx context.Context,
+	waitGroup *errgroup.Group,
+	cfg utils.Config,
+	store db.Store,
+	taskDistributor worker.TaskDistributor,
+) {
 	server, err := gapi.NewServer(cfg, store, taskDistributor)
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot create server: ")
@@ -125,13 +188,10 @@ func runGatewayServer(cfg utils.Config, store db.Store, taskDistributor worker.T
 		}),
 	)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	err = pb.RegisterBankServiceHandlerServer(ctx, grpcMux, server)
 
 	if err != nil {
-		log.Fatal().Err(err).Msg("cannot register handiler server: ")
+		log.Fatal().Err(err).Msg("cannot register handler server: ")
 	}
 
 	mux := http.NewServeMux()
@@ -143,17 +203,37 @@ func runGatewayServer(cfg utils.Config, store db.Store, taskDistributor worker.T
 	}
 	mux.Handle("/swagger/", http.StripPrefix("/swagger/", http.FileServer(statikFS)))
 
-	lis, err := net.Listen("tcp", cfg.HTTPServerAddress)
-	if err != nil {
-		log.Fatal().Err(err).Msg("cannot create listener")
+	httpServer := &http.Server{
+		Handler: gapi.HTTPLogger(mux),
+		Addr:    cfg.HTTPServerAddress,
 	}
 
-	log.Info().Msgf("start HTTP server at %s", lis.Addr().String())
+	waitGroup.Go(func() error {
+		log.Info().Msgf("start HTTP server at %s", httpServer.Addr)
+		err := httpServer.ListenAndServe()
+		if err != nil {
+			if errors.Is(err, http.ErrServerClosed) {
+				return nil
+			}
+			log.Fatal().Err(err).Msg("cannot start HTTP gateway server")
+			return err
+		}
+		return nil
+	})
 
-	err = http.Serve(lis, gapi.HTTPLogger(mux))
-	if err != nil {
-		log.Fatal().Err(err).Msg("cannot start HTTP gateway server: ")
-	}
+	waitGroup.Go(func() error {
+		<-ctx.Done()
+		log.Info().Msg("gracefully shutdowning HTTP gateway server")
+
+		err := httpServer.Shutdown(context.Background())
+		if err != nil {
+			log.Error().Err(err).Msg("failed to shutdown HTTP gateway server")
+			return err
+		}
+		log.Info().Msg("HTTP server is gracefully shutdown")
+		return nil
+	})
+
 }
 
 func runGinServer(cfg utils.Config, store db.Store) {
