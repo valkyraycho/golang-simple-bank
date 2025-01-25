@@ -41,7 +41,7 @@ func (s *Server) createTransaction(ctx *gin.Context) {
 		return
 	}
 
-	res, err := s.store.TransferTx(ctx, db.CreateTransactionParams{
+	res, err := s.store.TransferTx(ctx, db.TransactionTxParams{
 		FromAccountID: req.FromAccountID,
 		ToAccountID:   req.ToAccountID,
 		Amount:        req.Amount,

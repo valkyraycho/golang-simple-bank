@@ -22,7 +22,7 @@ func TestTransferTx(t *testing.T) {
 
 	for i := 0; i < n; i++ {
 		go func() {
-			res, err := store.TransferTx(context.Background(), CreateTransactionParams{
+			res, err := store.TransferTx(context.Background(), TransactionTxParams{
 				FromAccountID: account1.ID,
 				ToAccountID:   account2.ID,
 				Amount:        amount,
@@ -123,7 +123,7 @@ func TestTransferTxDeadlock(t *testing.T) {
 			toAccountID = account1.ID
 		}
 		go func() {
-			_, err := store.TransferTx(context.Background(), CreateTransactionParams{
+			_, err := store.TransferTx(context.Background(), TransactionTxParams{
 				FromAccountID: fromAccountID,
 				ToAccountID:   toAccountID,
 				Amount:        amount,

@@ -5,11 +5,13 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/hibiken/asynq"
 	"github.com/lib/pq"
 	db "github.com/valkyraycho/bank/db/sqlc"
 	"github.com/valkyraycho/bank/pb"
 	"github.com/valkyraycho/bank/utils"
 	"github.com/valkyraycho/bank/validator"
+	"github.com/valkyraycho/bank/worker"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -28,11 +30,23 @@ func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb
 		return nil, status.Errorf(codes.Internal, "failed to hash password: %s", err)
 	}
 
-	user, err := s.store.CreateUser(ctx, db.CreateUserParams{
+	createUserTxResult, err := s.store.CreateUserTx(ctx, db.CreateUserTxParams{
 		Username:       req.GetUsername(),
 		HashedPassword: hashedPassword,
 		FullName:       req.GetFullName(),
 		Email:          req.GetEmail(),
+		AfterCreate: func(user db.User) error {
+			opts := []asynq.Option{
+				asynq.MaxRetry(10),
+				asynq.ProcessIn(3 * time.Second),
+				asynq.Queue(worker.QueueCritical),
+			}
+
+			return s.taskDistributor.DistributeTaskSendVerifyEmail(
+				ctx,
+				&worker.PayloadSendVerifyEmail{Username: user.Username},
+				opts...)
+		},
 	})
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok {
@@ -43,7 +57,8 @@ func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb
 		}
 		return nil, status.Errorf(codes.Internal, "failed to create user: %s", err)
 	}
-	return &pb.CreateUserResponse{User: convertUser(user)}, nil
+
+	return &pb.CreateUserResponse{User: convertUser(createUserTxResult.User)}, nil
 }
 
 func validateCreateUserRequest(req *pb.CreateUserRequest) []*errdetails.BadRequest_FieldViolation {
