@@ -31,10 +31,12 @@ func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb
 	}
 
 	createUserTxResult, err := s.store.CreateUserTx(ctx, db.CreateUserTxParams{
-		Username:       req.GetUsername(),
-		HashedPassword: hashedPassword,
-		FullName:       req.GetFullName(),
-		Email:          req.GetEmail(),
+		CreateUserParams: db.CreateUserParams{
+			Username:       req.GetUsername(),
+			HashedPassword: hashedPassword,
+			FullName:       req.GetFullName(),
+			Email:          req.GetEmail(),
+		},
 		AfterCreate: func(user db.User) error {
 			opts := []asynq.Option{
 				asynq.MaxRetry(10),
@@ -151,7 +153,7 @@ func validateLoginUserRequest(req *pb.LoginUserRequest) []*errdetails.BadRequest
 func convertUser(user db.User) *pb.User {
 	return &pb.User{
 		Username:          user.Username,
-		Fullname:          user.FullName,
+		FullName:          user.FullName,
 		Email:             user.Email,
 		CreatedAt:         timestamppb.New(user.CreatedAt),
 		PasswordChangedAt: timestamppb.New(user.PasswordChangedAt),

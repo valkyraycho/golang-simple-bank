@@ -3,11 +3,8 @@ package db
 import "context"
 
 type CreateUserTxParams struct {
-	Username       string `json:"username"`
-	HashedPassword string `json:"hashed_password"`
-	FullName       string `json:"full_name"`
-	Email          string `json:"email"`
-	AfterCreate    func(user User) error
+	CreateUserParams
+	AfterCreate func(user User) error
 }
 
 type CreateUserTxResult struct {

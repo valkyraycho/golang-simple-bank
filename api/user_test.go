@@ -13,7 +13,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
-	mock_db "github.com/valkyraycho/bank/db/mock"
+	mockdb "github.com/valkyraycho/bank/db/mock"
 	db "github.com/valkyraycho/bank/db/sqlc"
 	"github.com/valkyraycho/bank/utils"
 	"go.uber.org/mock/gomock"
@@ -50,7 +50,7 @@ func TestCreateUserAPI(t *testing.T) {
 	testCases := []struct {
 		name          string
 		body          gin.H
-		buildStubs    func(store *mock_db.MockStore)
+		buildStubs    func(store *mockdb.MockStore)
 		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
 		{
@@ -61,7 +61,7 @@ func TestCreateUserAPI(t *testing.T) {
 				"full_name": user.FullName,
 				"email":     user.Email,
 			},
-			buildStubs: func(store *mock_db.MockStore) {
+			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					CreateUser(gomock.Any(), EqCreateUserParams(db.CreateUserParams{
 						Username: user.Username,
@@ -84,7 +84,7 @@ func TestCreateUserAPI(t *testing.T) {
 				"full_name": user.FullName,
 				"email":     user.Email,
 			},
-			buildStubs: func(store *mock_db.MockStore) {
+			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					CreateUser(gomock.Any(), EqCreateUserParams(db.CreateUserParams{
 						Username: user.Username,
@@ -106,7 +106,7 @@ func TestCreateUserAPI(t *testing.T) {
 				"full_name": user.FullName,
 				"email":     user.Email,
 			},
-			buildStubs: func(store *mock_db.MockStore) {
+			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					CreateUser(gomock.Any(), EqCreateUserParams(db.CreateUserParams{
 						Username: user.Username,
@@ -128,7 +128,7 @@ func TestCreateUserAPI(t *testing.T) {
 				"full_name": user.FullName,
 				"email":     "invalid",
 			},
-			buildStubs: func(store *mock_db.MockStore) {
+			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					CreateUser(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -145,7 +145,7 @@ func TestCreateUserAPI(t *testing.T) {
 				"full_name": user.FullName,
 				"email":     user.Email,
 			},
-			buildStubs: func(store *mock_db.MockStore) {
+			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					CreateUser(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -162,7 +162,7 @@ func TestCreateUserAPI(t *testing.T) {
 				"full_name": user.FullName,
 				"email":     user.Email,
 			},
-			buildStubs: func(store *mock_db.MockStore) {
+			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					CreateUser(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -178,7 +178,7 @@ func TestCreateUserAPI(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			store := mock_db.NewMockStore(ctrl)
+			store := mockdb.NewMockStore(ctrl)
 			testCase.buildStubs(store)
 
 			server := NewTestServer(t, store)
@@ -200,7 +200,7 @@ func TestLoginUserAPI(t *testing.T) {
 	testCases := []struct {
 		name          string
 		body          gin.H
-		buildStubs    func(store *mock_db.MockStore)
+		buildStubs    func(store *mockdb.MockStore)
 		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
 		{
@@ -209,7 +209,7 @@ func TestLoginUserAPI(t *testing.T) {
 				"username": user.Username,
 				"password": password,
 			},
-			buildStubs: func(store *mock_db.MockStore) {
+			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					GetUser(gomock.Any(), gomock.Eq(user.Username)).
 					Times(1).
@@ -228,7 +228,7 @@ func TestLoginUserAPI(t *testing.T) {
 				"username": user.Username,
 				"password": password,
 			},
-			buildStubs: func(store *mock_db.MockStore) {
+			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					GetUser(gomock.Any(), gomock.Eq(user.Username)).
 					Times(1).
@@ -244,7 +244,7 @@ func TestLoginUserAPI(t *testing.T) {
 				"username": user.Username,
 				"password": "incorrect",
 			},
-			buildStubs: func(store *mock_db.MockStore) {
+			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					GetUser(gomock.Any(), gomock.Eq(user.Username)).
 					Times(1).
@@ -260,7 +260,7 @@ func TestLoginUserAPI(t *testing.T) {
 				"username": user.Username,
 				"password": password,
 			},
-			buildStubs: func(store *mock_db.MockStore) {
+			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					GetUser(gomock.Any(), gomock.Any()).
 					Times(1).
@@ -276,7 +276,7 @@ func TestLoginUserAPI(t *testing.T) {
 				"username": "invalid-user#1",
 				"password": password,
 			},
-			buildStubs: func(store *mock_db.MockStore) {
+			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					GetUser(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -292,7 +292,7 @@ func TestLoginUserAPI(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			store := mock_db.NewMockStore(ctrl)
+			store := mockdb.NewMockStore(ctrl)
 			testCase.buildStubs(store)
 
 			server := NewTestServer(t, store)

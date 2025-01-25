@@ -204,7 +204,7 @@
         "username": {
           "type": "string"
         },
-        "fullname": {
+        "fullName": {
           "type": "string"
         },
         "email": {

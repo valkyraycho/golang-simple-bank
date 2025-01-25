@@ -13,7 +13,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
-	mock_db "github.com/valkyraycho/bank/db/mock"
+	mockdb "github.com/valkyraycho/bank/db/mock"
 	db "github.com/valkyraycho/bank/db/sqlc"
 	"github.com/valkyraycho/bank/token"
 	"github.com/valkyraycho/bank/utils"
@@ -28,7 +28,7 @@ func TestGetAccountAPI(t *testing.T) {
 		name          string
 		accountID     int64
 		setupAuth     func(t *testing.T, request *http.Request, tokenMaker token.Maker)
-		buildStubs    func(store *mock_db.MockStore)
+		buildStubs    func(store *mockdb.MockStore)
 		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
 		{
@@ -44,7 +44,7 @@ func TestGetAccountAPI(t *testing.T) {
 					time.Minute,
 				)
 			},
-			buildStubs: func(store *mock_db.MockStore) {
+			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					GetAccount(gomock.Any(), gomock.Eq(account.ID)).
 					Times(1).
@@ -68,7 +68,7 @@ func TestGetAccountAPI(t *testing.T) {
 					time.Minute,
 				)
 			},
-			buildStubs: func(store *mock_db.MockStore) {
+			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					GetAccount(gomock.Any(), gomock.Eq(account.ID)).
 					Times(1).
@@ -82,7 +82,7 @@ func TestGetAccountAPI(t *testing.T) {
 			name:      "NoAuth",
 			accountID: account.ID,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {},
-			buildStubs: func(store *mock_db.MockStore) {
+			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					GetAccount(gomock.Any(), gomock.Eq(account.ID)).
 					Times(0)
@@ -104,7 +104,7 @@ func TestGetAccountAPI(t *testing.T) {
 					time.Minute,
 				)
 			},
-			buildStubs: func(store *mock_db.MockStore) {
+			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					GetAccount(gomock.Any(), gomock.Eq(account.ID)).
 					Times(1).
@@ -127,7 +127,7 @@ func TestGetAccountAPI(t *testing.T) {
 					time.Minute,
 				)
 			},
-			buildStubs: func(store *mock_db.MockStore) {
+			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					GetAccount(gomock.Any(), gomock.Eq(account.ID)).
 					Times(1).
@@ -150,7 +150,7 @@ func TestGetAccountAPI(t *testing.T) {
 					time.Minute,
 				)
 			},
-			buildStubs: func(store *mock_db.MockStore) {
+			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					GetAccount(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -165,7 +165,7 @@ func TestGetAccountAPI(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			store := mock_db.NewMockStore(ctrl)
+			store := mockdb.NewMockStore(ctrl)
 			testCase.buildStubs(store)
 
 			server := NewTestServer(t, store)
@@ -192,7 +192,7 @@ func TestCreateAccountAPI(t *testing.T) {
 		name          string
 		body          gin.H
 		setupAuth     func(t *testing.T, request *http.Request, tokenMaker token.Maker)
-		buildStubs    func(store *mock_db.MockStore)
+		buildStubs    func(store *mockdb.MockStore)
 		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
 		{
@@ -211,7 +211,7 @@ func TestCreateAccountAPI(t *testing.T) {
 					time.Minute,
 				)
 			},
-			buildStubs: func(store *mock_db.MockStore) {
+			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					CreateAccount(gomock.Any(), gomock.Eq(db.CreateAccountParams{
 						Owner:    account.Owner,
@@ -233,7 +233,7 @@ func TestCreateAccountAPI(t *testing.T) {
 				"currency": account.Currency,
 			},
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {},
-			buildStubs: func(store *mock_db.MockStore) {
+			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					GetAccount(gomock.Any(), gomock.Eq(account.ID)).
 					Times(0)
@@ -258,7 +258,7 @@ func TestCreateAccountAPI(t *testing.T) {
 					time.Minute,
 				)
 			},
-			buildStubs: func(store *mock_db.MockStore) {
+			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					CreateAccount(gomock.Any(), gomock.Eq(db.CreateAccountParams{
 						Owner:    account.Owner,
@@ -288,7 +288,7 @@ func TestCreateAccountAPI(t *testing.T) {
 					time.Minute,
 				)
 			},
-			buildStubs: func(store *mock_db.MockStore) {
+			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					CreateAccount(gomock.Any(), gomock.Eq(db.CreateAccountParams{
 						Owner:    account.Owner,
@@ -318,7 +318,7 @@ func TestCreateAccountAPI(t *testing.T) {
 					time.Minute,
 				)
 			},
-			buildStubs: func(store *mock_db.MockStore) {
+			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					CreateAccount(gomock.Any(), gomock.Eq(db.CreateAccountParams{
 						Owner:    account.Owner,
@@ -348,7 +348,7 @@ func TestCreateAccountAPI(t *testing.T) {
 					time.Minute,
 				)
 			},
-			buildStubs: func(store *mock_db.MockStore) {
+			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					CreateAccount(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -363,7 +363,7 @@ func TestCreateAccountAPI(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			store := mock_db.NewMockStore(ctrl)
+			store := mockdb.NewMockStore(ctrl)
 			testCase.buildStubs(store)
 
 			server := NewTestServer(t, store)
@@ -402,7 +402,7 @@ func TestGetAccountsAPI(t *testing.T) {
 		name          string
 		query         Query
 		setupAuth     func(t *testing.T, request *http.Request, tokenMaker token.Maker)
-		buildStubs    func(store *mock_db.MockStore)
+		buildStubs    func(store *mockdb.MockStore)
 		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
 		{
@@ -421,7 +421,7 @@ func TestGetAccountsAPI(t *testing.T) {
 					time.Minute,
 				)
 			},
-			buildStubs: func(store *mock_db.MockStore) {
+			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					ListAccounts(gomock.Any(), db.ListAccountsParams{
 						Owner:  user.Username,
@@ -443,7 +443,7 @@ func TestGetAccountsAPI(t *testing.T) {
 				pageSize: n,
 			},
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {},
-			buildStubs: func(store *mock_db.MockStore) {
+			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					ListAccounts(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -468,7 +468,7 @@ func TestGetAccountsAPI(t *testing.T) {
 					time.Minute,
 				)
 			},
-			buildStubs: func(store *mock_db.MockStore) {
+			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					ListAccounts(gomock.Any(), db.ListAccountsParams{
 						Owner:  user.Username,
@@ -498,7 +498,7 @@ func TestGetAccountsAPI(t *testing.T) {
 					time.Minute,
 				)
 			},
-			buildStubs: func(store *mock_db.MockStore) {
+			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					ListAccounts(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -523,7 +523,7 @@ func TestGetAccountsAPI(t *testing.T) {
 					time.Minute,
 				)
 			},
-			buildStubs: func(store *mock_db.MockStore) {
+			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					ListAccounts(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -539,7 +539,7 @@ func TestGetAccountsAPI(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			store := mock_db.NewMockStore(ctrl)
+			store := mockdb.NewMockStore(ctrl)
 			testCase.buildStubs(store)
 
 			server := NewTestServer(t, store)
